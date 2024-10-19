@@ -1,7 +1,8 @@
 import React from 'react';
-import   Quiz   from '../../src/components/Quiz';
-import { getQuestions } from '../../src/services/questionApi';
+import   Quiz   from '../../client/src/components/Quiz';
+import { getQuestions } from '../../client/src/services/questionApi';
 import '@testing-library/cypress/add-commands';
+import { mount } from 'cypress/react18';
 
 
 const mockQuestions = [
@@ -17,59 +18,41 @@ const mockQuestions = [
     },
 ];
 
-describe(Quiz, () => {
-    beforeEach (() => {
-        cy.stub(getQuestions, 'getQuestions').resolves(mockQuestions);
+describe('Quiz Component', () => {
+    beforeEach(() => {
+        cy.stub(getQuestions).returns(Promise.resolve(mockQuestions)); // Stubbing API calls
     });
-
+  
     it('should start the quiz when the Start button is clicked', () => {
-        cy.visit('/');
-        cy.get('button').click();
-        cy.get('h2').should('contain', 'What is the capital of France?');
+      mount(<Quiz />);
+      cy.get('button').contains('Start Quiz').click(); // Click the Start Quiz button
+      cy.get('h2').should('contain', 'What is the capital of France?'); // Check first question
     });
-});
-
-describe(Quiz, () => {
-    beforeEach (() => {
-        cy.stub(getQuestions, 'getQuestions').resolves(mockQuestions);
+  
+    it('should display the next question when the current question is answered', () => {
+      mount(<Quiz />);
+      cy.get('button').contains('Start Quiz').click();
+      cy.get('button').contains('Paris').click(); // Answer the first question
+      cy.get('h2').should('contain', 'What is the capital of Germany?'); // Check second question
     });
-
-    it('should display the next question when the current question is answered')
-    cy.visit('/');
-    cy.get('button').contains('Start Quiz').click();
-    cy.get('button').contains('Paris').click();
-    cy.get('h2').contains('What is the capital of Germany?').should('be visible');
-});
-
-describe(Quiz, () => {
-    beforeEach (() => {
-        cy.stub(getQuestions, 'getQuestions').resolves(mockQuestions);
-    });
-
+  
     it('should display the result when the last question is answered', () => {
-        cy.visit('/');
-        cy.get('button').contains('Start Quiz').click();
-        cy.get('button').contains('Paris').click();
-        cy.get('button').contains('Berlin').click();
-        cy.get('button').contains('Next').click();
-        cy.get('h2').contains('Your score is 1 out of 2').should('be visible');
+      mount(<Quiz />);
+      cy.get('button').contains('Start Quiz').click();
+      cy.get('button').contains('Paris').click(); // Answer first question
+      cy.get('button').contains('Berlin').click(); // Answer second question
+      cy.get('h2').contains('Your score is 2 out of 2').should('be.visible'); // Check final score
     });
-});
-
-describe(Quiz, () => {
-    beforeEach (() => {
-        cy.stub(getQuestions, 'getQuestions').resolves(mockQuestions);
-    });
-
+  
     it('should start the next quiz when the Take New Quiz button is clicked', () => {
-        cy.visit('/');
-        cy.get('button').contains('Start Quiz').click();
-        cy.get('button').contains('Paris').click();
-        cy.get('button').contains('Berlin').click();
-        cy.get('button').contains('Next').click();
-        cy.get('button').contains('Take New Quiz').click();
-        cy.get('h2').contains('What is the capital of France?').should('be visible');
+      mount(<Quiz />);
+      cy.get('button').contains('Start Quiz').click();
+      cy.get('button').contains('Paris').click(); // Answer first question
+      cy.get('button').contains('Berlin').click(); // Answer second question
+      cy.get('h2').contains('Your score is 2 out of 2').should('be.visible');
+      cy.get('button').contains('Take New Quiz').click(); // Click 'Take New Quiz'
+      cy.get('h2').should('contain', 'What is the capital of France?'); // Check that quiz restarted
     });
-});
+  });
 
 
